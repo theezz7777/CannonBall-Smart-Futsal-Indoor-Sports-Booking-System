@@ -1,0 +1,17 @@
+{
+  "total_bookings": 6124,
+  "confirmed": 5621,
+  "cancelled": 503,
+  "total_revenue": 7328000,
+  "top_venue": "Colombo Sports Arena",
+  "top_time": "evening",
+  "top_day": "Sunday",
+  "peak_month": "August",
+  "model1_accuracy": 35.3,
+  "model3_accuracy": 91.4,
+  "tod_classes": [
+    "afternoon",
+    "evening",
+    "morning"
+  ]
+}
