@@ -77,10 +77,19 @@ def add_court():
 def delete_court(court_id):
     try:
         cur = mysql.connection.cursor()
-        cur.execute("DELETE FROM courts WHERE id=%s", (court_id,))
+        # Step 1: Delete bookings linked to this court's time slots
+        cur.execute("""
+            DELETE FROM bookings WHERE time_slot_id IN (
+                SELECT id FROM time_slots WHERE court_id = %s
+            )
+        """, (court_id,))
+        # Step 2: Delete time slots for this court
+        cur.execute("DELETE FROM time_slots WHERE court_id = %s", (court_id,))
+        # Step 3: Now safe to delete the court
+        cur.execute("DELETE FROM courts WHERE id = %s", (court_id,))
         mysql.connection.commit()
         cur.close()
-        return jsonify({'message': 'Court deleted!'}), 200
+        return jsonify({'message': 'Court deleted successfully!'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

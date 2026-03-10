@@ -244,21 +244,63 @@ def ai_summary():
 def all_peaks():
     if not model_peak:
         return jsonify({'error': 'Models not trained yet.'}), 503
-    results    = []
-    slot_times = [('08:00','morning',0),('09:00','morning',0),('10:00','morning',0),('11:00','morning',0),
-                  ('14:00','afternoon',1),('15:00','afternoon',1),('16:00','afternoon',1),
-                  ('17:00','evening',1),('18:00','evening',1),('19:00','evening',1)]
-    venue_name = 'Colombo Sports Arena'
-    for court_id in [1, 2, 3, 4]:
-        for start, tod, is_pk in slot_times:
+    results = []
+
+    # Realistic demand volumes per time slot — morning quiet, evening busy
+    slot_config = [
+        ('08:00', 'morning',   0, 18, 10),
+        ('09:00', 'morning',   0, 22, 14),
+        ('10:00', 'morning',   0, 25, 18),
+        ('11:00', 'morning',   0, 30, 22),
+        ('14:00', 'afternoon', 1, 45, 38),
+        ('15:00', 'afternoon', 1, 55, 48),
+        ('16:00', 'afternoon', 1, 65, 58),
+        ('17:00', 'evening',   1, 78, 72),
+        ('18:00', 'evening',   1, 90, 85),
+        ('19:00', 'evening',   1, 95, 92),
+    ]
+
+    # Fetch real courts from DB
+    courts = []
+    db_error = None
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT c.id, c.court_name, l.name
+            FROM courts c
+            JOIN locations l ON c.location_id = l.id
+            ORDER BY c.id
+        """)
+        courts = cur.fetchall()
+        cur.close()
+    except Exception as db_err:
+        db_error = str(db_err)
+        courts = [(1, 'Court A', 'Colombo Sports Arena')]
+
+    if not courts:
+        courts = [(1, 'Court A', 'Colombo Sports Arena')]
+
+    # Use first known venue name from encoder as safe fallback
+    safe_venue = le_svenue.classes_[0] if le_svenue is not None and len(le_svenue.classes_) > 0 else 'Colombo Sports Arena'
+
+    for court_id, court_name, venue_name in courts:
+        # Use real venue name if encoder knows it, else safe fallback
+        v = venue_name if (le_svenue is not None and venue_name in le_svenue.classes_) else safe_venue
+        for start, tod, is_pk, wday_bk, wend_bk in slot_config:
             try:
-                time_enc  = le_stime.transform([start])[0]      if start      in le_stime.classes_  else 0
-                tod_enc   = le_stod.transform([tod])[0]         if tod        in le_stod.classes_   else 0
-                venue_enc = le_svenue.transform([venue_name])[0] if venue_name in le_svenue.classes_ else 0
-                features  = np.array([[court_id, time_enc, tod_enc, venue_enc, is_pk, 100, 60]])
+                time_enc  = le_stime.transform([start])[0] if (le_stime is not None and start in le_stime.classes_) else 0
+                tod_enc   = le_stod.transform([tod])[0]    if (le_stod  is not None and tod   in le_stod.classes_)  else 0
+                venue_enc = le_svenue.transform([v])[0]    if le_svenue is not None else 0
+                features  = np.array([[court_id, time_enc, tod_enc, venue_enc, is_pk, wday_bk, wend_bk]])
                 score     = round(max(0, min(10, float(model_peak.predict(features)[0]))), 2)
-                results.append({'court_id': court_id, 'start_time': start,
-                                'time_of_day': tod, 'popularity_score': score})
+                results.append({
+                    'court_id':         court_id,
+                    'court_name':       court_name,
+                    'venue_name':       venue_name,
+                    'start_time':       start,
+                    'time_of_day':      tod,
+                    'popularity_score': score
+                })
             except:
                 pass
     return jsonify(results), 200

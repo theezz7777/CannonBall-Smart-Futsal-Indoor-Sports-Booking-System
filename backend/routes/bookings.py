@@ -52,7 +52,7 @@ def get_user_bookings(user_id):
     try:
         cur = mysql.connection.cursor()
         cur.execute("""SELECT b.id,l.name,c.court_name,ts.date,ts.start_time,ts.end_time,
-            b.payment_method,b.payment_status,b.total_amount,b.status
+            b.payment_method,b.payment_status,b.total_amount,b.status,l.id
             FROM bookings b JOIN time_slots ts ON b.time_slot_id=ts.id
             JOIN courts c ON ts.court_id=c.id JOIN locations l ON c.location_id=l.id
             WHERE b.user_id=%s ORDER BY b.booking_date DESC""", (user_id,))
@@ -60,7 +60,8 @@ def get_user_bookings(user_id):
         cur.close()
         return jsonify([{'booking_id':r[0],'venue_name':r[1],'court_name':r[2],'date':str(r[3]),
             'start_time':str(r[4]),'end_time':str(r[5]),'payment_method':r[6],
-            'payment_status':r[7],'total_amount':float(r[8]) if r[8] else 0,'status':r[9]} for r in rows]), 200
+            'payment_status':r[7],'total_amount':float(r[8]) if r[8] else 0,'status':r[9],
+            'venue_id':r[10]} for r in rows]), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
