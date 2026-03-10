@@ -327,4 +327,4 @@ const S = {
   emptyBox:     { textAlign:'center', background:'#162032', border:'1px solid rgba(0,230,118,0.1)', borderRadius:'16px', padding:'60px 40px' },
 };
 
-export default MyBookings;  
+export default MyBookings;
