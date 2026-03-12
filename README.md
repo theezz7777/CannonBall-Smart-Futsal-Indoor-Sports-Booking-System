@@ -69,6 +69,62 @@ CannonBall/
 └── README.md
 ```
 
+---
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- MySQL 8.0+
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/theezz7777/CannonBall-Smart-Futsal-Indoor-Sports-Booking-System.git
+cd CannonBall-Smart-Futsal-Indoor-Sports-Booking-System
+```
+
+### 2. Database Setup
+```sql
+-- Run in MySQL Workbench
+SOURCE CannonBall_mysql_FIXED.sql;
+SOURCE reviews_migration.sql;
+```
+
+### 3. Backend Setup
+```bash
+cd backend
+pip install flask flask-mysqldb flask-cors bcrypt scikit-learn numpy pandas joblib
+```
+
+Create a `.env` file in the backend folder:
+```
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+MYSQL_DB=cannonball
+```
+
+Start Flask:
+```bash
+python app.py
+```
+
+### 4. Frontend Setup
+```bash
+cd frontend
+npm install
+npm start
+```
+
+### 5. Train ML Models
+```bash
+cd backend
+python train_model.py
+```
+
+---
+
 ## 🌐 Running the App
 
 | Service | URL |
